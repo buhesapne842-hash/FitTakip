@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#0f1115">
+<meta name="mobile-web-app-capable" content="yes">
+<title>FitTakip</title>
+<style>
+:root{--bg:#0f1115;--card:#181b22;--card2:#20242d;--tx:#f2f4f8;--mut:#8a93a6;--ac:#ff6a3d;--ok:#34d399;--bad:#f87171;--bd:#2a2f3a}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.4 system-ui,-apple-system,Roboto,sans-serif;overscroll-behavior:none;-webkit-user-select:none;user-select:none}
+input,textarea,select{-webkit-user-select:text;user-select:text}
+body{padding:calc(env(safe-area-inset-top) + 12px) 14px calc(140px + env(safe-area-inset-bottom));max-width:560px;margin:0 auto}
+h1{font-size:22px;margin:4px 0 2px}
+h2{font-size:16px;margin:18px 0 8px}
+.mut{color:var(--mut)}.small{font-size:12px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:14px;margin:10px 0}
+.card.live{border-color:var(--ac);background:#1f1713}
+.row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+button{font:inherit;color:var(--tx);border:0;border-radius:12px;padding:10px 14px;background:var(--card2);cursor:pointer}
+button.pri{background:var(--ac);color:#fff;font-weight:700;width:100%;padding:14px;margin-top:8px}
+button.done{background:var(--ok);color:#06281c;font-weight:700;width:100%;padding:14px;margin-top:8px}
+button.ghost{background:transparent;border:1px dashed var(--bd);color:var(--mut);width:100%;margin-top:6px;padding:8px}
+button.danger{background:#3a1d1d;color:var(--bad)}
+input,select,textarea{font:inherit;color:var(--tx);background:var(--card2);border:1px solid var(--bd);border-radius:10px;padding:9px;width:100%}
+input[type=checkbox]{width:auto}
+label{display:block}
+.strip{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin:10px 0}
+.day{background:var(--card);border:1px solid var(--bd);border-radius:12px;text-align:center;padding:8px 0;cursor:pointer}
+.day small{display:block;color:var(--mut);font-size:11px}
+.day b{display:block;font-size:15px}
+.day i{display:block;font-style:normal;font-size:13px;height:16px}
+.day.sel{border-color:var(--ac);background:#2a1a14}
+.day.today b{color:var(--ac)}
+.day.done i{color:var(--ok)}
+.day.live i{color:var(--ac)}
+.day.miss i{color:var(--bad)}
+.day.rest{opacity:.55}
+.set{display:flex;gap:6px;align-items:center;margin:6px 0}
+.set .n{width:20px;text-align:center;color:var(--mut)}
+.set input{flex:1;min-width:0;text-align:center;padding:8px 2px}
+.set span.u{color:var(--mut);font-size:12px;min-width:34px}
+.set button{padding:9px 0;width:44px;background:var(--card2);color:var(--mut)}
+.set.ok button.chk{background:var(--ok);color:#06281c;font-weight:700}
+.bar{height:6px;background:var(--card2);border-radius:6px;overflow:hidden;margin:8px 0}
+.bar div{height:100%;background:var(--ac);transition:width .3s}
+nav{position:fixed;left:0;right:0;bottom:0;background:#12151bf2;border-top:1px solid var(--bd);display:flex;padding:6px 4px calc(6px + env(safe-area-inset-bottom));z-index:5}
+nav button{flex:1;background:transparent;color:var(--mut);font-size:11px;padding:6px 0}
+nav button span{display:block;font-size:20px}
+nav button.on{color:var(--ac)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px;text-align:center}
+.stat b{display:block;font-size:22px;color:var(--ac)}
+.bars{display:flex;align-items:flex-end;gap:6px;height:100px}
+.bars div{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;font-size:10px;color:var(--mut)}
+.bars em{display:block;width:100%;background:var(--ac);border-radius:6px 6px 0 0;min-height:3px}
+.ex2{display:grid;grid-template-columns:1.3fr 1fr 1fr 1fr 40px;gap:6px;margin:6px 0}
+.ex2 button{padding:8px 0;background:#3a1d1d;color:var(--bad)}
+.toast{position:fixed;left:14px;right:14px;top:calc(env(safe-area-inset-top) + 10px);background:var(--ac);color:#fff;padding:12px 14px;border-radius:14px;font-weight:600;z-index:30;display:none}
+.ins{padding:8px 0;border-bottom:1px solid var(--bd)}.ins:last-child{border:0}
+textarea{min-height:90px;font-size:12px}
+#promptBox{min-height:260px;font-size:12px;line-height:1.35}
+.clk{font-size:30px;font-weight:800;color:var(--ac);font-variant-numeric:tabular-nums}
+#tbar{position:fixed;left:10px;right:10px;bottom:calc(66px + env(safe-area-inset-bottom));background:#2a1a14;border:1px solid var(--ac);border-radius:14px;padding:10px 12px;z-index:6;display:none}
+#tbar .bar{margin:6px 0}
+#tbar .tb{display:flex;gap:8px}
+#tbar .tb button{flex:1;padding:8px}
+#ttime{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums}
+#modal{position:fixed;inset:0;background:#000b;display:none;align-items:flex-end;justify-content:center;z-index:20}
+.sheet{background:var(--card);width:100%;max-width:560px;border-radius:20px 20px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));max-height:90vh;overflow:auto}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px}
+.chip{padding:8px 12px;border-radius:999px;background:var(--card2);color:var(--mut)}
+.chip.on{background:var(--ac);color:#fff;font-weight:700}
+.fld{margin:8px 0}
+.fld>span{display:block;color:var(--mut);font-size:12px;margin-bottom:3px}
+.cap{display:grid;grid-template-columns:1.3fr 1fr 1fr 1fr 40px;gap:6px;color:var(--mut);font-size:11px;margin-top:8px}
+</style>
+</head>
+<body>
+<div class="toast" id="toast" onclick="this.style.display='none'"></div>
+<div id="app"></div>
+<div id="tbar"><div class="row"><b id="tlab"></b><span id="ttime"></span></div><div class="bar"><div id="tfill" style="width:0"></div></div><div class="tb"><button onclick="timerAdd(15)">+15 sn</button><button onclick="timerSkip()">Geç</button></div></div>
+<nav id="nav"></nav>
+<div id="modal" onclick="if(event.target===this)closeModal()"></div>
+
+<script>
+/* ================= temel ================= */
+const DAYS=['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'];
+const DAYS_L=['Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi','Pazar'];
+const KEY='fittakip_v2';
+const CAP=window.Capacitor,P=(CAP&&CAP.Plugins)||{};
+const el=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad=n=>String(n).padStart(2,'0');
+const dk=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const pd=s=>{const[a,b,c]=s.split('-').map(Number);return new Date(a,b-1,c)};
+const dow=d=>(d.getDay()+6)%7;
+const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x};
+const mondayOf=d=>addDays(d,-dow(d));
+const uid=()=>Math.random().toString(36).slice(2,9);
+const hhmm=t=>{const d=new Date(t);return pad(d.getHours())+':'+pad(d.getMinutes())};
+const tsOf=(date,hm)=>{const[y,m,d]=date.split('-').map(Number),[h,mi]=(hm||'00:00').split(':').map(Number);return new Date(y,m-1,d,h||0,mi||0).getTime()};
+const fmtS=s=>{s=Math.max(0,Math.round(s));const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;return(h?h+':'+pad(m):pad(m))+':'+pad(x)};
+const xe=(name,sets,target,rest,type)=>({name,type:type||'reps',sets,reps:target,rest:rest==null?45:rest});
+
+function defProgram(){return[
+ {name:'Üst Vücut (İtiş)',rest:false,ex:[xe('Şınav',4,12,60),xe('Pike Şınav (omuz)',3,8,60),xe('Elmas Şınav',3,8,60),xe('Sandalye Dips',3,12,60),xe('Plank Omuz Dokunuşu',3,30,45,'time')]},
+ {name:'Alt Vücut',rest:false,ex:[xe('Squat',4,20,60),xe('Lunge (her bacak)',3,12,60),xe('Glute Bridge',3,20,45),xe('Duvar Oturuşu',3,40,45,'time'),xe('Parmak Ucu Kalkış',3,25,30)]},
+ {name:'Core & Kardiyo',rest:false,ex:[xe('Plank',3,45,45,'time'),xe('Mountain Climber',3,30,30,'time'),xe('Bicycle Crunch',3,20,30),xe('Bacak Kaldırma',3,15,30),xe('Burpee',3,10,60)]},
+ {name:'Dinlenme',rest:true,ex:[]},
+ {name:'Full Body',rest:false,ex:[xe('Burpee',3,10,60),xe('Squat Jump',3,15,60),xe('Şınav',3,12,60),xe('Superman',3,15,30),xe('Plank',3,40,45,'time')]},
+ {name:'Dinlenme',rest:true,ex:[]},
+ {name:'Dinlenme',rest:true,ex:[]}
+]}
+function base(){return{program:defProgram(),sessions:{},visits:[],timer:null,
+ profile:{age:'',height:'',weight:'',goal:'Yağ yakımı + kas tonu',level:'Başlangıç',equip:'Ekipmansız (vücut ağırlığı)',notes:''},
+ reminder:{on:false,time:'18:00'},lastNotif:''}}
+function load(){try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.program&&s.program.length===7)return Object.assign(base(),s)}catch(e){}return base()}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+let S=load(),view='today',sel=dk(new Date()),statEx='',tmp={};
+let aiRange=14,aiMode='analiz',aiVisits=true,aiRaw=true;
+
+/* ================= yardımcılar ================= */
+const doneList=()=>Object.values(S.sessions).filter(s=>s.start&&s.end).sort((a,b)=>a.start-b.start);
+const activeSession=()=>Object.values(S.sessions).find(s=>s.start&&!s.end)||null;
+const dmin=s=>Math.max(0,Math.round((s.end-s.start)/60000));
+const plannedCount=()=>S.program.filter(p=>!p.rest).length;
+function agg(s){let sets=0,reps=0,sec=0,kgv=0;s.ex.forEach(e=>e.sets.forEach(x=>{if(!x.ok)return;sets++;if(e.type==='time')sec+=+x.sec||0;else{reps+=+x.reps||0;kgv+=(+x.reps||0)*(+x.kg||0)}}));return{sets,reps,sec,kgv}}
+function gaps(s){const ts=[];s.ex.forEach(e=>e.sets.forEach(x=>{if(x.ok&&x.t)ts.push(x.t)}));ts.sort((a,b)=>a-b);const g=[];for(let i=1;i<ts.length;i++){const d=(ts[i]-ts[i-1])/1000;if(d<600)g.push(d)}return g}
+const avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:0;
+function mkSession(date){
+ const p=S.program[dow(pd(date))];
+ return{id:uid(),date,name:p.rest?'Serbest antrenman':p.name,start:null,end:null,rpe:'',energy:'',note:'',manual:false,
+  ex:p.rest?[]:p.ex.map(e=>({name:e.name,type:e.type,target:e.reps,rest:e.rest,sets:Array.from({length:+e.sets||1},()=>({reps:'',kg:'',sec:'',ok:false,t:null}))}))};
+}
+function lastFor(name,date){
+ const ks=Object.keys(S.sessions).filter(k=>k<date&&S.sessions[k].end).sort().reverse();
+ for(const k of ks){
+  const e=S.sessions[k].ex.find(x=>x.name.toLowerCase()===name.toLowerCase());if(!e)continue;
+  const ok=e.sets.filter(x=>x.ok);
+  if(ok.length)return ok.map(x=>e.type==='time'?(x.sec||'?'):(x.reps||'?')).join(' / ')+(e.type==='time'?' sn':' tekrar');
+ }return null;
+}
+function firstKey(){
+ const c=[];
+ S.visits.forEach(v=>c.push(v.s));
+ Object.values(S.sessions).forEach(s=>{c.push(s.start||tsOf(s.date,'00:00'))});
+ return c.length?dk(new Date(Math.min(...c))):dk(new Date());
+}
+function weekStats(mon){let n=0,min=0;for(let i=0;i<7;i++){const s=S.sessions[dk(addDays(mon,i))];if(s&&s.end){n++;min+=dmin(s)}}return{n,min}}
+function streak(){
+ let n=0;const t=new Date();
+ for(let i=0;i<400;i++){const d=addDays(t,-i),s=S.sessions[dk(d)],p=S.program[dow(d)];
+  if(s&&s.end){n++;continue}
+  if(p.rest)continue;
+  if(i===0)continue;
+  break}
+ return n;
+}
+function exHist(name){
+ const out=[];
+ doneList().forEach(s=>s.ex.forEach(e=>{
+  if(e.name.toLowerCase()!==name.toLowerCase())return;
+  const ok=e.sets.filter(x=>x.ok);if(!ok.length)return;
+  out.push({d:s.date,v:Math.max(...ok.map(x=>+(e.type==='time'?x.sec:x.reps)||0)),unit:e.type==='time'?'sn':'tekrar'});
+ }));
+ return out.slice(-10);
+}
+function allExNames(){const seen={},out=[];doneList().forEach(s=>s.ex.forEach(e=>{const l=e.name.toLowerCase();if(!seen[l]&&exHist(e.name).length){seen[l]=1;out.push(e.name)}}));return out}
+function visitStats(days){
+ const since=Date.now()-days*864e5;
+ const v=S.visits.filter(x=>x.s>=since&&(x.e-x.s)>=5000);
+ const byDay={};v.forEach(x=>{const k=dk(new Date(x.s));byDay[k]=byDay[k]||{n:0,ms:0};byDay[k].n++;byDay[k].ms+=x.e-x.s});
+ const ks=Object.keys(byDay).sort();
+ const totalMs=ks.reduce((a,k)=>a+byDay[k].ms,0);
+ return{v,byDay,ks,totalMs,avgMin:ks.length?totalMs/ks.length/60000:0};
+}
+
+/* ================= modal / toast ================= */
+let modalCb=null;
+function modal(h){const m=el('modal');m.innerHTML='<div class="sheet">'+h+'</div>';m.style.display='flex'}
+function closeModal(){const m=el('modal');m.style.display='none';m.innerHTML=''}
+function ask(msg,label,cb){modalCb=cb;modal(`<p style="margin-top:0">${esc(msg)}</p><div class="grid"><button onclick="closeModal()">Vazgeç</button><button class="danger" onclick="closeModal();modalCb&&modalCb()">${esc(label)}</button></div>`)}
+function toast(m){const t=el('toast');t.textContent=m;t.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>t.style.display='none',4000)}
+function chips(name,max){return Array.from({length:max},(_,i)=>`<button class="chip ${tmp[name]===i+1?'on':''}" data-chip="${name}" data-v="${i+1}" onclick="setChip('${name}',${i+1})">${i+1}</button>`).join('')}
+function setChip(n,v){tmp[n]=(tmp[n]===v?0:v);document.querySelectorAll('[data-chip="'+n+'"]').forEach(b=>b.classList.toggle('on',+b.dataset.v===tmp[n]))}
+
+/* ================= titreşim / ses / ekran ================= */
+function buzz(){
+ try{if(P.Haptics&&P.Haptics.vibrate)P.Haptics.vibrate({duration:400});else if(navigator.vibrate)navigator.vibrate([200,100,200])}catch(e){}
+ try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return;const c=new C(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=880;g.gain.value=.15;o.start();setTimeout(()=>{o.stop();c.close()},250)}catch(e){}
+}
+let wl=null;
+async function wake(){try{if(navigator.wakeLock&&activeSession()&&!wl){wl=await navigator.wakeLock.request('screen');wl.addEventListener('release',()=>{wl=null})}}catch(e){}}
+function unwake(){try{if(wl)wl.release()}catch(e){}wl=null}
+
+/* ================= uygulama giriş/çıkış kaydı ================= */
+let visit=null;
+function visitStart(){visit={s:Date.now(),e:Date.now()};S.visits.push(visit);if(S.visits.length>500)S.visits=S.visits.slice(-400);save()}
+function visitBeat(){if(visit){visit.e=Date.now();save()}}
+document.addEventListener('visibilitychange',()=>{
+ if(document.hidden){visitBeat();visit=null}
+ else{if(!visit)visitStart();checkReminder();wake()}
+});
+window.addEventListener('pagehide',()=>{visitBeat()});
+setInterval(visitBeat,15000);
+
+/* ================= antrenman akışı ================= */
+function go(v){view=v;render();window.scrollTo(0,0)}
+function pick(k){sel=k;render()}
+function shiftWeek(n){sel=dk(addDays(pd(sel),7*n));render()}
+function startSession(){
+ if(activeSession()){toast('Önce devam eden antrenmanı bitir');return}
+ const s=mkSession(sel);s.start=Date.now();S.sessions[sel]=s;save();wake();render();
+}
+function setVal(ei,si,f,v){const s=S.sessions[sel];if(!s)return;s.ex[ei].sets[si][f]=v;save()}
+function afterSet(s,ei,si){
+ const e=s.ex[ei],last=(ei===s.ex.length-1&&si===e.sets.length-1);
+ if(last){S.timer=null;return}
+ const r=+e.rest||45;S.timer={kind:'rest',until:Date.now()+r*1000,total:r};
+}
+function toggleSet(ei,si){
+ const s=S.sessions[sel];if(!s)return;
+ const e=s.ex[ei],x=e.sets[si];
+ if(!x.ok){
+  if(e.type==='time'){if(x.sec==='')x.sec=e.target}else{if(x.reps==='')x.reps=e.target}
+  x.ok=true;x.t=Date.now();
+  if(!s.end)afterSet(s,ei,si);
+ }else{x.ok=false;x.t=null}
+ save();render(true);
+}
+function startHold(ei,si){
+ const s=S.sessions[sel];if(!s)return;
+ const e=s.ex[ei],x=e.sets[si],sec=+x.sec||+e.target||30;
+ S.timer={kind:'hold',until:Date.now()+sec*1000,total:sec,date:sel,ei,si,label:e.name};save();tick();
+}
+function addSet(ei){const s=S.sessions[sel];if(!s)return;s.ex[ei].sets.push({reps:'',kg:'',sec:'',ok:false,t:null});save();render(true)}
+function timerAdd(n){if(S.timer){S.timer.until+=n*1000;S.timer.total+=n;save();tick()}}
+function timerSkip(){const t=S.timer;if(!t)return;if(t.kind==='hold'){S.timer=null;save();tick();return}S.timer=null;save();tick()}
+function timerDone(){
+ const t=S.timer;S.timer=null;save();buzz();
+ if(t.kind==='hold'){
+  const s=S.sessions[t.date];
+  if(s&&s.ex[t.ei]&&s.ex[t.ei].sets[t.si]){const x=s.ex[t.ei].sets[t.si];x.sec=t.total;x.ok=true;x.t=Date.now();if(!s.end)afterSet(s,t.ei,t.si);save()}
+  toast('Süre tamam ✓');render(true);
+ }else toast('Dinlenme bitti, sıradaki sete!');
+}
+function tick(){
+ const now=Date.now(),a=activeSession(),c=el('clk');
+ if(c&&a)c.textContent=fmtS((now-a.start)/1000);
+ const t=S.timer,bar=el('tbar');
+ if(t){
+  const left=t.until-now;
+  if(left<=0){bar.style.display='none';timerDone();return}
+  bar.style.display='block';
+  el('tlab').textContent=t.kind==='hold'?'Tut: '+t.label:'Dinlen';
+  el('ttime').textContent=fmtS(Math.ceil(left/1000));
+  el('tfill').style.width=Math.max(0,Math.min(100,(1-left/(t.total*1000))*100))+'%';
+ }else bar.style.display='none';
+}
+setInterval(tick,1000);
+
+function finishModal(){
+ const s=activeSession();if(!s)return;
+ tmp={rpe:+s.rpe||0,energy:+s.energy||0};
+ modal(`<h2 style="margin-top:0">Antrenmanı bitir</h2>
+ <div class="mut small">Zorluk (RPE 1-10)</div><div class="chips">${chips('rpe',10)}</div>
+ <div class="mut small">Enerji (1-5)</div><div class="chips">${chips('energy',5)}</div>
+ <div class="fld"><span>Bitiş saati</span><input type="time" id="fe" value="${hhmm(Date.now())}"></div>
+ <textarea id="fn" placeholder="Not: ağrı, uyku, nasıl hissettin...">${esc(s.note)}</textarea>
+ <button class="pri" onclick="finishSave()">Kaydet ve bitir</button>`);
+}
+function finishSave(){
+ const s=activeSession();if(!s)return;
+ const v=el('fe').value;let end=Date.now();
+ if(v&&v!==hhmm(Date.now())){end=tsOf(s.date,v);if(end<s.start)end+=864e5}
+ s.end=Math.max(end,s.start+1000);
+ s.rpe=tmp.rpe||'';s.energy=tmp.energy||'';s.note=el('fn').value.trim();
+ S.timer=null;unwake();save();closeModal();render();tick();
+ toast('Helal! '+dmin(s)+' dk antrenman kaydedildi 💪');
+}
+function manualModal(){
+ modal(`<h2 style="margin-top:0">${esc(pd(sel).toLocaleDateString('tr-TR',{day:'numeric',month:'long',weekday:'long'}))} için kayıt</h2>
+ <div class="mut small">Bu günkü planın tamamlandı olarak eklenir, sonra gerçek değerleri düzenleyebilirsin.</div>
+ <div class="fld"><span>Başlangıç saati</span><input type="time" id="mt" value="18:00"></div>
+ <div class="fld"><span>Süre (dakika)</span><input type="number" inputmode="numeric" id="md" value="40"></div>
+ <button class="pri" onclick="manualSave()">Kaydı ekle</button>`);
+}
+function manualSave(){
+ if(S.sessions[sel]){closeModal();return}
+ const t=el('mt').value||'18:00',m=+el('md').value||30;
+ const s=mkSession(sel);s.start=tsOf(sel,t);s.end=s.start+m*60000;s.manual=true;
+ s.ex.forEach(e=>e.sets.forEach(x=>{x.ok=true;if(e.type==='time')x.sec=e.target;else x.reps=e.target}));
+ S.sessions[sel]=s;save();closeModal();render();toast('Kayıt eklendi ✓');
+}
+function timesModal(){
+ const s=S.sessions[sel];if(!s)return;
+ modal(`<h2 style="margin-top:0">Saatleri düzenle</h2>
+ <div class="fld"><span>Başlangıç</span><input type="time" id="ts" value="${hhmm(s.start)}"></div>
+ <div class="fld"><span>Bitiş</span><input type="time" id="te" value="${hhmm(s.end||Date.now())}"></div>
+ <button class="pri" onclick="timesSave()">Kaydet</button>`);
+}
+function timesSave(){
+ const s=S.sessions[sel];if(!s)return;
+ s.start=tsOf(s.date,el('ts').value);let e=tsOf(s.date,el('te').value);if(e<=s.start)e+=864e5;s.end=e;
+ save();closeModal();render();
+}
+function addExModal(){
+ modal(`<h2 style="margin-top:0">Hareket ekle</h2>
+ <div class="fld"><span>Hareket adı</span><input id="an" placeholder="örn. Şınav"></div>
+ <div class="grid3"><div class="fld"><span>Tür</span><select id="at"><option value="reps">Tekrar</option><option value="time">Süre (sn)</option></select></div>
+ <div class="fld"><span>Set</span><input type="number" id="as" value="3"></div>
+ <div class="fld"><span>Hedef</span><input type="number" id="ar" value="10"></div></div>
+ <button class="pri" onclick="addExSave()">Ekle</button>`);
+}
+function addExSave(){
+ const s=S.sessions[sel];if(!s)return;
+ const n=el('an').value.trim();if(!n){toast('Hareket adı yaz');return}
+ const sets=Math.max(1,+el('as').value||3),tg=+el('ar').value||10,type=el('at').value;
+ s.ex.push({name:n,type,target:tg,rest:45,sets:Array.from({length:sets},()=>({reps:'',kg:'',sec:'',ok:false,t:null}))});
+ save();closeModal();render(true);
+}
+function delSession(){ask('Bu günün antrenman kaydı silinsin mi?','Sil',()=>{const s=S.sessions[sel];if(s&&!s.end){S.timer=null;unwake()}delete S.sessions[sel];save();render();tick()})}
+
+/* ================= program düzenleme ================= */
+function pName(i,v){S.program[i].name=v;save()}
+function pRest(i,v){S.program[i].rest=v;if(v&&!S.program[i].name.trim())S.program[i].name='Dinlenme';save();render(true);scheduleNative()}
+function pEx(i,j,f,v){const e=S.program[i].ex[j];if(f==='name')e.name=v;else if(f==='type')e.type=v;else e[f]=Math.max(0,+v||0);save();if(f==='type')render(true)}
+function pAdd(i){S.program[i].ex.push(xe('Yeni hareket',3,10,45));save();render(true)}
+function pDel(i,j){S.program[i].ex.splice(j,1);save();render(true)}
+
+/* ================= hatırlatma ================= */
+async function scheduleNative(){
+ const LN=P.LocalNotifications;if(!LN)return false;
+ try{
+  const perm=await LN.requestPermissions();if(perm.display!=='granted')return false;
+  const pend=await LN.getPending();
+  if(pend.notifications&&pend.notifications.length)await LN.cancel({notifications:pend.notifications.map(n=>({id:n.id}))});
+  if(!S.reminder.on)return true;
+  const[h,m]=S.reminder.time.split(':').map(Number),list=[];
+  S.program.forEach((p,i)=>{if(!p.rest)list.push({id:101+i,title:'FitTakip',body:'Bugün '+p.name+' var, hadi başla! 🔥',schedule:{on:{weekday:((i+1)%7)+1,hour:h,minute:m},allowWhileIdle:true}})});
+  if(list.length)await LN.schedule({notifications:list});
+  return true;
+ }catch(e){return false}
+}
+async function setReminder(on){
+ S.reminder.on=on;save();
+ if(P.LocalNotifications){const ok=await scheduleNative();if(on&&!ok)toast('Bildirim izni verilmedi')}
+ else if(on&&'Notification' in window&&Notification.permission==='default'){try{await Notification.requestPermission()}catch(e){}}
+ render(true);
+}
+function setTime(v){S.reminder.time=v||'18:00';save();scheduleNative()}
+function notify(msg){toast(msg);try{if('Notification' in window&&Notification.permission==='granted')new Notification('FitTakip',{body:msg})}catch(e){}}
+function checkReminder(){
+ if(!S.reminder.on||P.LocalNotifications)return;
+ const n=new Date(),t=pad(n.getHours())+':'+pad(n.getMinutes()),today=dk(n);
+ if(S.lastNotif===today||t<S.reminder.time)return;
+ const p=S.program[dow(n)],s=S.sessions[today];
+ S.lastNotif=today;save();
+ if(!p.rest&&!(s&&s.start))notify('Bugün '+p.name+' var, hadi başla! 🔥');
+}
+setInterval(checkReminder,30000);
+
+/* ================= grafik ================= */
+function lineChart(pts){
+ if(pts.length<2)return'<div class="mut small">Grafik için en az 2 antrenman kaydı lazım.</div>';
+ const W=320,H=150,Pd=26,mn=Math.min(...pts.map(p=>p.v)),mx=Math.max(...pts.map(p=>p.v)),r=(mx-mn)||1;
+ const xs=pts.map((_,i)=>Pd+i*(W-2*Pd)/(pts.length-1)),ys=pts.map(p=>H-Pd-(p.v-mn)/r*(H-2*Pd));
+ const path=xs.map((x,i)=>(i?'L':'M')+x.toFixed(1)+' '+ys[i].toFixed(1)).join(' ');
+ const dots=xs.map((x,i)=>`<circle cx="${x.toFixed(1)}" cy="${ys[i].toFixed(1)}" r="4" fill="#ff6a3d"/><text x="${x.toFixed(1)}" y="${(ys[i]-9).toFixed(1)}" fill="#8a93a6" font-size="10" text-anchor="middle">${pts[i].v}</text>`).join('');
+ return`<svg viewBox="0 0 ${W} ${H}" width="100%"><path d="${path}" fill="none" stroke="#ff6a3d" stroke-width="2.5" stroke-linejoin="round"/>${dots}</svg>`;
+}
+
+/* ================= Bugün ekranı ================= */
+function exCards(s){
+ return s.ex.map((e,ei)=>{
+  const last=lastFor(e.name,s.date),isT=e.type==='time';
+  return`<div class="card"><div class="row"><b>${esc(e.name)}</b><span class="mut small">hedef ${esc(e.target)} ${isT?'sn':'tekrar'}</span></div>
+  ${last?`<div class="mut small">Geçen sefer: ${esc(last)}</div>`:''}
+  ${e.sets.map((x,si)=>isT?
+   `<div class="set ${x.ok?'ok':''}"><span class="n">${si+1}</span><input type="number" inputmode="numeric" placeholder="${esc(e.target)}" value="${esc(x.sec)}" onchange="setVal(${ei},${si},'sec',this.value)"><span class="u">sn</span><button onclick="startHold(${ei},${si})">⏱</button><button class="chk" onclick="toggleSet(${ei},${si})">✓</button></div>`:
+   `<div class="set ${x.ok?'ok':''}"><span class="n">${si+1}</span><input type="number" inputmode="numeric" placeholder="${esc(e.target)}" value="${esc(x.reps)}" onchange="setVal(${ei},${si},'reps',this.value)"><span class="u">tekrar</span><input type="number" inputmode="decimal" placeholder="+kg" value="${esc(x.kg)}" onchange="setVal(${ei},${si},'kg',this.value)"><button class="chk" onclick="toggleSet(${ei},${si})">✓</button></div>`).join('')}
+  <button class="ghost" onclick="addSet(${ei})">+ Set ekle</button></div>`;
+ }).join('')+`<button class="ghost" onclick="addExModal()">+ Hareket ekle</button>`;
+}
+function viewToday(){
+ const d=pd(sel),mon=mondayOf(d),todayK=dk(new Date()),p=S.program[dow(d)],s=S.sessions[sel],act=activeSession();
+ const strip=Array.from({length:7},(_,i)=>{
+  const dt=addDays(mon,i),k=dk(dt),ss=S.sessions[k],pr=S.program[i];
+  let cls='day',mark='·';if(k===sel)cls+=' sel';if(k===todayK)cls+=' today';
+  if(ss&&ss.end){cls+=' done';mark='✓'}else if(ss&&ss.start){cls+=' live';mark='●'}
+  else if(pr.rest){cls+=' rest';mark=''}else if(k<todayK){cls+=' miss';mark='✗'}
+  return`<div class="${cls}" onclick="pick('${k}')"><small>${DAYS[i]}</small><b>${dt.getDate()}</b><i>${mark}</i></div>`;
+ }).join('');
+ const title=d.toLocaleDateString('tr-TR',{weekday:'long',day:'numeric',month:'long'}),ws=weekStats(mon);
+ let body='';
+ if(act&&act.date!==sel)body+=`<div class="card live" onclick="pick('${act.date}')"><b>● Devam eden antrenman var</b><div class="mut small">${esc(act.name)} · ${hhmm(act.start)}'de başladı. Dokun, git.</div></div>`;
+ if(s&&s.start&&!s.end){
+  const tot=s.ex.reduce((a,e)=>a+e.sets.length,0),ok=s.ex.reduce((a,e)=>a+e.sets.filter(x=>x.ok).length,0);
+  body+=`<div class="card live"><div class="row"><div><b>${esc(s.name)}</b><div class="mut small">Başlangıç ${hhmm(s.start)} · ${ok}/${tot} set</div></div><div id="clk" class="clk">${fmtS((Date.now()-s.start)/1000)}</div></div>
+  <div class="bar"><div style="width:${tot?ok/tot*100:0}%"></div></div>
+  ${Date.now()-s.start>5*3600e3?'<div class="small" style="color:var(--bad)">Bu antrenman 5 saatten uzun süredir açık. Bitirmeyi unutmuş olabilirsin, bitişte saati düzeltebilirsin.</div>':''}</div>`+
+  exCards(s)+`<button class="done" onclick="finishModal()">Antrenmanı Bitir</button><button class="ghost" onclick="delSession()">İptal et ve sil</button>`;
+ }else if(s&&s.end){
+  const a=agg(s),g=gaps(s);
+  body+=`<div class="card"><div class="row"><b>✅ ${esc(s.name)}</b><span class="mut small">${s.manual?'elle girildi':''}</span></div>
+  <div class="mut small">${hhmm(s.start)} → ${hhmm(s.end)}${s.rpe?' · RPE '+esc(s.rpe)+'/10':''}${s.energy?' · Enerji '+esc(s.energy)+'/5':''}</div>
+  <div class="grid3" style="margin-top:10px"><div class="stat"><b>${dmin(s)}</b><span class="mut small">dakika</span></div><div class="stat"><b>${a.sets}</b><span class="mut small">set</span></div><div class="stat"><b>${a.reps}</b><span class="mut small">tekrar</span></div></div>
+  ${a.sec||g.length?`<div class="mut small" style="margin-top:8px">${a.sec?'Toplam tutuş: '+a.sec+' sn. ':''}${g.length?'Set arası ort. '+Math.round(avg(g))+' sn.':''}</div>`:''}
+  ${s.note?`<div class="small" style="margin-top:6px">📝 ${esc(s.note)}</div>`:''}
+  <div class="grid" style="margin-top:10px"><button onclick="timesModal()">Saatleri düzenle</button><button class="danger" onclick="delSession()">Sil</button></div></div>`+exCards(s);
+ }else{
+  if(p.rest)body+=`<div class="card" style="text-align:center"><div style="font-size:34px">😴</div><b>Dinlenme günü</b><div class="mut small">İstersen yine de serbest antrenman başlatabilirsin.</div></div>`;
+  else body+=`<div class="card"><b>${esc(p.name)}</b>${p.ex.map(e=>`<div class="row small" style="padding:5px 0;border-top:1px solid var(--bd);margin-top:5px"><span>${esc(e.name)}</span><span class="mut">${e.sets} × ${e.reps}${e.type==='time'?' sn':''}</span></div>`).join('')}</div>`;
+  if(sel===todayK)body+=`<button class="pri" onclick="startSession()">▶ ${p.rest?'Serbest antrenman başlat':'Antrenmanı Başlat'}</button>`;
+  else if(sel<todayK)body+=`<button class="pri" onclick="manualModal()">Bu güne antrenman kaydet</button>`;
+  else body+=`<div class="mut small" style="text-align:center">Gelecek gün, antrenman günü gelince başlat.</div>`;
+ }
+ return`<div class="row"><div><h1 style="text-transform:capitalize">${esc(title)}</h1><div class="mut small">Bu hafta ${ws.n}/${plannedCount()} antrenman · ${ws.min} dk</div></div>
+ <div><button onclick="shiftWeek(-1)">‹</button> <button onclick="shiftWeek(1)">›</button></div></div><div class="strip">${strip}</div>${body}`;
+}
+
+/* ================= Program ================= */
+function viewProgram(){
+ return`<h1>Haftalık Program</h1><div class="mut small">Ev antrenmanı hareketleri. Tür: Tekrar veya Süre (plank gibi).</div>`+
+ S.program.map((p,i)=>`<div class="card"><div class="row"><b>${DAYS_L[i]}</b><label class="mut small"><input type="checkbox" ${p.rest?'checked':''} onchange="pRest(${i},this.checked)"> Dinlenme</label></div>
+ ${p.rest?'':`<input style="margin:8px 0" value="${esc(p.name)}" placeholder="Antrenman adı" oninput="pName(${i},this.value)">
+ <div class="cap"><span>Hareket / Tür</span><span>Set</span><span>Hedef</span><span>Dinlen sn</span><span></span></div>
+ ${p.ex.map((e,j)=>`<div style="margin-top:6px"><input value="${esc(e.name)}" oninput="pEx(${i},${j},'name',this.value)">
+ <div class="ex2"><select onchange="pEx(${i},${j},'type',this.value)"><option value="reps" ${e.type==='reps'?'selected':''}>Tekrar</option><option value="time" ${e.type==='time'?'selected':''}>Süre</option></select>
+ <input type="number" inputmode="numeric" value="${esc(e.sets)}" oninput="pEx(${i},${j},'sets',this.value)">
+ <input type="number" inputmode="numeric" value="${esc(e.reps)}" oninput="pEx(${i},${j},'reps',this.value)">
+ <input type="number" inputmode="numeric" value="${esc(e.rest)}" oninput="pEx(${i},${j},'rest',this.value)">
+ <button onclick="pDel(${i},${j})">✕</button></div></div>`).join('')}
+ <button class="ghost" onclick="pAdd(${i})">+ Hareket ekle</button>`}</div>`).join('');
+}
+
+/* ================= İstatistik ================= */
+function viewStats(){
+ const today=new Date(),mon=mondayOf(today),cur=weekStats(mon),pl=plannedCount(),list=doneList(),total=list.length;
+ const totalMin=list.reduce((a,s)=>a+dmin(s),0);
+ const weeks=Array.from({length:8},(_,i)=>{const m=addDays(mon,-7*(7-i));return{lbl:m.getDate()+'/'+(m.getMonth()+1),min:weekStats(m).min}});
+ const mxw=Math.max(...weeks.map(w=>w.min),1);
+ const names=allExNames();
+ if(!statEx||!names.some(n=>n.toLowerCase()===statEx.toLowerCase()))statEx=names[0]||'';
+ const hist=statEx?exHist(statEx):[];
+ const vs=visitStats(7),todayV=S.visits.filter(x=>dk(new Date(x.s))===dk(today)&&(x.e-x.s)>=5000);
+ const todayMs=todayV.reduce((a,x)=>a+(x.e-x.s),0);
+ const ins=[];
+ ins.push(cur.n>=pl?`Bu hafta ${cur.n}/${pl}: hedef tamam, aferin 🔥`:`Bu hafta ${cur.n}/${pl} antrenman yaptın, ${pl-cur.n} tane kaldı.`);
+ if(total){
+  ins.push(`Ortalama antrenman süresi ${Math.round(totalMin/total)} dk, en uzun ${Math.max(...list.map(dmin))} dk.`);
+  const st=list.map(s=>{const d=new Date(s.start);return d.getHours()*60+d.getMinutes()}),a=Math.round(avg(st));
+  ins.push(`Genelde ${pad(Math.floor(a/60))}:${pad(a%60)} civarı başlıyorsun.`);
+  const rp=list.map(s=>+s.rpe).filter(Boolean);if(rp.length)ins.push(`Ortalama zorluk (RPE): ${avg(rp).toFixed(1)}/10.`);
+  const gp=[].concat(...list.map(gaps));if(gp.length)ins.push(`Set arası ortalama ${Math.round(avg(gp))} sn.`);
+ }else ins.push('Henüz kayıt yok. Bugün sekmesinden ilk antrenmanı başlat.');
+ let best=null;names.forEach(n=>{const h=exHist(n);if(h.length>=2){const df=h[h.length-1].v-h[0].v;if(!best||df>best.df)best={n,df,to:h[h.length-1].v,u:h[0].unit}}});
+ if(best&&best.df>0)ins.push(`En çok ilerleyen: ${best.n} (+${best.df} ${best.u}, şimdi ${best.to}).`);
+ const missed=[],fk=firstKey();for(let i=1;i<=7;i++){const d=addDays(today,-i),p=S.program[dow(d)],s=S.sessions[dk(d)];if(dk(d)>=fk&&!p.rest&&!(s&&s.end))missed.push(DAYS[dow(d)])}
+ if(missed.length)ins.push('Son 7 günde kaçırdığın: '+missed.join(', ')+'.');
+ ins.push(`Bugün uygulamaya ${todayV.length} kez girdin, toplam ${Math.round(todayMs/60000)} dk.`);
+ return`<h1>İstatistik</h1>
+ <div class="grid" style="margin-top:10px"><div class="stat"><b>${streak()}</b><span class="mut small">gün seri 🔥</span></div><div class="stat"><b>${total}</b><span class="mut small">toplam antrenman</span></div>
+ <div class="stat"><b>${cur.n}/${pl}</b><span class="mut small">bu hafta</span></div><div class="stat"><b>${Math.round(totalMin/60*10)/10}</b><span class="mut small">toplam saat</span></div></div>
+ <h2>Analiz</h2><div class="card">${ins.map(t=>`<div class="ins">${esc(t)}</div>`).join('')}</div>
+ <h2>Haftalık süre (dk)</h2><div class="card"><div class="bars">${weeks.map(w=>`<div>${w.min}<em style="height:${w.min/mxw*75}%"></em>${w.lbl}</div>`).join('')}</div></div>
+ <h2>Hareket gelişimi (seansın en iyi seti)</h2><div class="card">
+ ${names.length?`<select onchange="statEx=this.value;render(true)">${names.map(n=>`<option ${n.toLowerCase()===statEx.toLowerCase()?'selected':''}>${esc(n)}</option>`).join('')}</select><div style="margin-top:8px">${lineChart(hist)}</div>${hist.length?`<div class="mut small">Rekor: ${Math.max(...hist.map(h=>h.v))} ${hist[0].unit}</div>`:''}`:'<div class="mut small">Antrenman bitirince burada görünecek.</div>'}</div>
+ <h2>Uygulama kullanımı (7 gün)</h2><div class="card">
+ ${vs.ks.length?vs.ks.slice(-7).reverse().map(k=>`<div class="row ins"><span>${esc(DAYS[dow(pd(k))])} ${esc(k.slice(5))}</span><span class="mut">${vs.byDay[k].n} giriş · ${Math.round(vs.byDay[k].ms/60000)} dk</span></div>`).join('')+`<div class="mut small" style="margin-top:6px">Gün başına ortalama ${Math.round(vs.avgMin)} dk.</div>`:'<div class="mut small">Henüz veri yok.</div>'}</div>`;
+}
+
+/* ================= AI prompt ================= */
+function buildPrompt(){
+ const now=new Date(),todayK=dk(now),sinceK=dk(addDays(now,-(aiRange-1))),pr=S.profile;
+ const ses=doneList().filter(s=>s.date>=sinceK),firstK=firstKey();
+ let planned=0,done=0,extra=0;const missed=[];
+ for(let i=aiRange-1;i>=0;i--){
+  const d=addDays(now,-i),k=dk(d),p=S.program[dow(d)],s=S.sessions[k],ok=s&&s.end;
+  if(k<firstK)continue;
+  if(p.rest){if(ok)extra++;continue}
+  if(ok){planned++;done++}else if(k<todayK){planned++;missed.push(k.slice(5)+' '+DAYS[dow(d)])}
+ }
+ const totalMin=ses.reduce((a,s)=>a+dmin(s),0),rp=ses.map(s=>+s.rpe).filter(Boolean),en=ses.map(s=>+s.energy).filter(Boolean);
+ const st=ses.map(s=>{const d=new Date(s.start);return d.getHours()*60+d.getMinutes()}),sa=Math.round(avg(st));
+ const gp=[].concat(...ses.map(gaps));
+ let t='';
+ const head={
+  analiz:'Sen deneyimli bir ev antrenmanı koçu ve spor bilimcisisin. Aşağıdaki verilerle beni detaylı analiz et. Veride olmayan şeyi uydurma; veri eksikse bunu söyle ve neyi kaydetmem gerektiğini yaz.',
+  plan:'Sen deneyimli bir ev antrenmanı koçusun. Aşağıdaki verilere bakarak bana önümüzdeki 2 hafta için ekipmansız (veya profilimdeki ekipmanla) progresif yüklenmeli yeni bir program hazırla. Veride olmayan şeyi uydurma.',
+  koc:'Sen sert ama adil bir ev antrenmanı koçusun. Aşağıdaki verilere bakıp bana kısa ve net geri bildirim ver. Veride olmayan şeyi uydurma.'
+ }[aiMode];
+ t+=head+'\nBugünün tarihi: '+todayK+' ('+DAYS_L[dow(now)]+'). Analiz aralığı: son '+aiRange+' gün.\n\n';
+ t+='## PROFİL\n';
+ t+=`Yaş: ${pr.age||'?'} | Boy: ${pr.height||'?'} cm | Kilo: ${pr.weight||'?'} kg\nHedef: ${pr.goal} | Seviye: ${pr.level}\nEkipman: ${pr.equip}\nNot/sakatlık/uyku/beslenme: ${pr.notes||'yok'}\n\n`;
+ t+='## PLANLI HAFTALIK PROGRAM\n'+S.program.map((p,i)=>DAYS[i]+': '+(p.rest?'Dinlenme':p.name+' — '+p.ex.map(e=>e.name+' '+e.sets+'x'+e.reps+(e.type==='time'?'sn':'')+' (ara '+e.rest+'sn)').join('; '))).join('\n')+'\n\n';
+ t+='## ÖZET\n';
+ t+=`Planlı gün: ${planned} | Yapılan: ${done} | Tutarlılık: ${planned?Math.round(done/planned*100):0}% | Planlı olmayan ekstra antrenman: ${extra}\n`;
+ t+=`Toplam süre: ${totalMin} dk | Antrenman başına ort.: ${ses.length?Math.round(totalMin/ses.length):0} dk | Güncel seri: ${streak()} gün\n`;
+ t+=`Ort. RPE: ${rp.length?avg(rp).toFixed(1):'veri yok'} | Ort. enerji: ${en.length?avg(en).toFixed(1):'veri yok'} | Ort. başlama saati: ${st.length?pad(Math.floor(sa/60))+':'+pad(sa%60):'veri yok'} | Set arası ort.: ${gp.length?Math.round(avg(gp))+' sn':'veri yok'}\n`;
+ t+=`Kaçırılan planlı günler: ${missed.length?missed.join(', '):'yok'}\n\n`;
+ t+='## ANTRENMAN KAYITLARI\n';
+ if(!ses.length)t+='Bu aralıkta kayıt yok.\n';
+ ses.forEach(s=>{
+  t+=`${s.date} (${DAYS[dow(pd(s.date))]}) | ${s.name} | ${hhmm(s.start)}→${hhmm(s.end)} (${dmin(s)} dk)${s.rpe?' | RPE '+s.rpe+'/10':''}${s.energy?' | Enerji '+s.energy+'/5':''}${s.manual?' | sonradan elle girildi':''}${s.note?' | Not: '+s.note:''}\n`;
+  if(aiRaw){
+   s.ex.forEach(e=>{
+    const ok=e.sets.filter(x=>x.ok);
+    t+=`  - ${e.name}: `+(ok.length?ok.map(x=>e.type==='time'?(x.sec||'?')+'sn':(x.reps||'?')+(+x.kg?'(+'+x.kg+'kg)':'')).join(', ')+(e.type==='time'?'':' tekrar')+` (hedef ${e.sets.length}x${e.target}${e.type==='time'?'sn':''})`:'yapılmadı')+'\n';
+   });
+   const g=gaps(s);if(g.length)t+=`  - set arası ort.: ${Math.round(avg(g))} sn\n`;
+  }
+ });
+ if(aiVisits){
+  const vs=visitStats(aiRange),hrs={};
+  vs.v.forEach(x=>{const h=new Date(x.s).getHours();hrs[h]=(hrs[h]||0)+1});
+  const hk=Object.keys(hrs).sort((a,b)=>hrs[b]-hrs[a]).slice(0,3).map(h=>pad(h)+':00');
+  t+=`\n## UYGULAMA KULLANIMI\nToplam ${vs.v.length} giriş, ${vs.ks.length} farklı gün, gün başına ort. ${Math.round(vs.avgMin)} dk. En sık giriş saatleri: ${hk.length?hk.join(', '):'veri yok'}.\nSon girişler: ${vs.v.slice(-8).map(x=>dk(new Date(x.s))+' '+hhmm(x.s)+' ('+Math.max(1,Math.round((x.e-x.s)/60000))+' dk)').join('; ')||'veri yok'}\n`;
+ }
+ t+='\n## İSTEDİĞİM ÇIKTI\n';
+ if(aiMode==='analiz')t+='Türkçe ve şu başlıklarla yanıtla:\n1) Genel durum (10 üzerinden puan + tek paragraf)\n2) Tutarlılık ve zamanlama düzenim (hangi gün/saat, kaçırma örüntüsü)\n3) Süre, yoğunluk ve dinlenme analizi (RPE, set arası süre, seans uzunluğu)\n4) Hareket bazlı ilerleme, plato olanlar ve zayıf noktalar\n5) Aşırı yüklenme / sakatlık riski ve toparlanma\n6) Uygulamayı kullanma alışkanlığım (giriş sıklığı, motivasyon yorumu)\n7) En önemli 5 aksiyon maddesi\n8) Önümüzdeki 7 gün için gün gün somut plan (hareket, set x tekrar, dinlenme)\nEn sonda, daha iyi analiz için bana 3 soru sor.';
+ else if(aiMode==='plan')t+='Türkçe yanıtla. 2 haftalık programı gün gün yaz (hareket, set x tekrar/süre, dinlenme sn, ısınma ve soğuma). Progresyon kuralını (hangi koşulda tekrar/zorluk artar) açıkla. Mevcut programdan neyi neden değiştirdiğini kısaca belirt. Ekipman gerektiren bir şey varsa ekipmansız alternatifini yaz.';
+ else t+='Türkçe yanıtla, en fazla 200 kelime: 1) bu dönemin tek cümlelik özeti, 2) en iyi yaptığım şey, 3) en büyük hatam, 4) bu hafta için tek odak hedefi, 5) kısa bir motivasyon cümlesi.';
+ return t;
+}
+function regen(){const b=el('promptBox');if(b)b.value=buildPrompt()}
+function profSet(f,v){S.profile[f]=v;save();regen()}
+function setAi(k,v){if(k==='range')aiRange=v;else if(k==='mode')aiMode=v;else if(k==='visits')aiVisits=v;else aiRaw=v;render(true)}
+async function copyText(text){
+ try{await navigator.clipboard.writeText(text);return true}catch(e){}
+ try{const b=el('promptBox')||el('io');if(b){b.focus();b.select();return document.execCommand('copy')}}catch(e){}
+ return false;
+}
+async function copyPrompt(){const ok=await copyText(el('promptBox').value);toast(ok?'Kopyalandı ✓ AI uygulamasına yapıştır':'Kopyalanamadı, metni seçip elle kopyala')}
+async function sharePrompt(){
+ const text=el('promptBox').value;
+ try{
+  if(P.Share&&P.Share.share){await P.Share.share({title:'FitTakip analiz',text});return}
+  if(navigator.share){await navigator.share({title:'FitTakip analiz',text});return}
+ }catch(e){return}
+ copyPrompt();
+}
+const sopt=(arr,v)=>arr.map(a=>`<option ${a===v?'selected':''}>${esc(a)}</option>`).join('');
+function viewAI(){
+ const pr=S.profile,rg=[7,14,30,90],md=[['analiz','Detaylı analiz'],['plan','2 hafta plan'],['koc','Kısa koç']];
+ return`<h1>AI Analiz</h1><div class="mut small">Antrenman, süre ve giriş verilerinden hazır prompt üretir. Kopyala, ChatGPT / Claude / Gemini'ye yapıştır.</div>
+ <div class="card"><b>Profil</b><div class="grid3" style="margin-top:8px">
+ <div class="fld"><span>Yaş</span><input type="number" inputmode="numeric" value="${esc(pr.age)}" oninput="profSet('age',this.value)"></div>
+ <div class="fld"><span>Boy (cm)</span><input type="number" inputmode="numeric" value="${esc(pr.height)}" oninput="profSet('height',this.value)"></div>
+ <div class="fld"><span>Kilo (kg)</span><input type="number" inputmode="decimal" value="${esc(pr.weight)}" oninput="profSet('weight',this.value)"></div></div>
+ <div class="grid"><div class="fld"><span>Hedef</span><select onchange="profSet('goal',this.value)">${sopt(['Yağ yakımı + kas tonu','Yağ yakımı','Kas kazanımı','Kondisyon / dayanıklılık','Güç','Genel sağlık'],pr.goal)}</select></div>
+ <div class="fld"><span>Seviye</span><select onchange="profSet('level',this.value)">${sopt(['Başlangıç','Orta','İleri'],pr.level)}</select></div></div>
+ <div class="fld"><span>Ekipman</span><input value="${esc(pr.equip)}" oninput="profSet('equip',this.value)"></div>
+ <div class="fld"><span>Sakatlık, uyku, beslenme notları</span><textarea oninput="profSet('notes',this.value)" placeholder="örn. sol diz hassas, 6 saat uyuyorum">${esc(pr.notes)}</textarea></div></div>
+ <div class="card"><div class="mut small">Aralık</div><div class="chips">${rg.map(r=>`<button class="chip ${aiRange===r?'on':''}" onclick="setAi('range',${r})">${r} gün</button>`).join('')}</div>
+ <div class="mut small">Ne istiyorsun?</div><div class="chips">${md.map(m=>`<button class="chip ${aiMode===m[0]?'on':''}" onclick="setAi('mode','${m[0]}')">${m[1]}</button>`).join('')}</div>
+ <label class="small"><input type="checkbox" ${aiRaw?'checked':''} onchange="setAi('raw',this.checked)"> Set set detayları</label>
+ <label class="small" style="margin-top:6px"><input type="checkbox" ${aiVisits?'checked':''} onchange="setAi('visits',this.checked)"> Uygulama giriş/çıkış verisi</label></div>
+ <textarea id="promptBox">${esc(buildPrompt())}</textarea>
+ <div class="grid" style="margin-top:8px"><button class="pri" style="margin:0" onclick="copyPrompt()">📋 Kopyala</button><button style="padding:14px" onclick="sharePrompt()">📤 Paylaş</button></div>`;
+}
+
+/* ================= Ayarlar ================= */
+function doExport(){el('io').value=JSON.stringify(S)}
+function doImport(){
+ try{const s=JSON.parse(el('io').value);if(!s.program||s.program.length!==7)throw 0;S=Object.assign(base(),s);save();visit=null;visitStart();toast('Yüklendi ✓');render()}
+ catch(e){toast('Geçersiz veri')}
+}
+async function doCopyBackup(){doExport();const ok=await copyText(el('io').value);toast(ok?'Yedek kopyalandı ✓':'Metni seçip elle kopyala')}
+function doReset(){ask('Tüm veriler silinsin mi? Bu geri alınamaz.','Hepsini sil',()=>{S=base();save();visit=null;visitStart();render();tick()})}
+function viewSettings(){
+ const r=S.reminder,native=!!P.LocalNotifications,perm=('Notification' in window)?Notification.permission:'yok';
+ return`<h1>Ayarlar</h1>
+ <div class="card"><div class="row"><b>Antrenman hatırlatma</b><input type="checkbox" ${r.on?'checked':''} onchange="setReminder(this.checked)"></div>
+ <div class="mut small" style="margin:6px 0">Antrenman günlerinde bu saatte bildirim gönderir.</div>
+ <input type="time" value="${esc(r.time)}" onchange="setTime(this.value)">
+ <div class="mut small" style="margin-top:6px">${native?'Telefon bildirimi aktif (uygulama kapalıyken de çalışır).':'Tarayıcı modu: uygulama açıkken çalışır. Bildirim izni: '+esc(perm)+'. APK sürümünde arka planda da çalışır.'}</div>
+ <button class="ghost" onclick="notify('Test: Bugün antrenman var! 🔥')">Test bildirimi</button></div>
+ <div class="card"><b>Yedek</b><div class="mut small" style="margin:4px 0 8px">Veriler yalnızca bu cihazda saklanır. Telefon değiştirirsen yedeği al.</div>
+ <textarea id="io" placeholder="Yedek metni burada"></textarea>
+ <div class="grid" style="margin-top:8px"><button onclick="doCopyBackup()">Yedeği kopyala</button><button onclick="doImport()">Yapıştırdığımı yükle</button></div></div>
+ <div class="card"><button class="danger" style="width:100%" onclick="doReset()">Tüm verileri sil</button></div>
+ <div class="mut small" style="text-align:center">FitTakip v2 · ev antrenmanı</div>`;
+}
+
+/* ================= render ================= */
+function render(keep){
+ const y=window.scrollY;
+ el('app').innerHTML=({today:viewToday,program:viewProgram,stats:viewStats,ai:viewAI,settings:viewSettings})[view]();
+ const tabs=[['today','🏠','Bugün'],['program','📅','Program'],['stats','📈','İstatistik'],['ai','🤖','AI'],['settings','⚙️','Ayarlar']];
+ el('nav').innerHTML=tabs.map(t=>`<button class="${view===t[0]?'on':''}" onclick="go('${t[0]}')"><span>${t[1]}</span>${t[2]}</button>`).join('');
+ if(keep===true)window.scrollTo(0,y);
+}
+
+/* ================= Android geri tuşu ================= */
+function onBack(){
+ if(el('modal').style.display==='flex'){closeModal();return}
+ if(view!=='today'){go('today');return}
+ if(P.App&&P.App.exitApp)P.App.exitApp();
+}
+try{if(P.App&&P.App.addListener)P.App.addListener('backButton',onBack)}catch(e){}
+
+/* ================= başlat ================= */
+visitStart();render();tick();checkReminder();wake();scheduleNative();
+</script>
+</body>
+</html>

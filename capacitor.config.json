@@ -1,0 +1,8 @@
+{
+  "appId": "com.fittakip.app",
+  "appName": "FitTakip",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  }
+}
